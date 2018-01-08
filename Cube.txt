@@ -1,0 +1,19 @@
+Affugter
+Protein
+
+
+Goal 	30 sek
+
+Cross 	 5 sek
+F2l 	15 sek
+OLL 	 5 sek
+PLL 	 5 sek
+
+
+
+Current		51-56 sek
+
+Cross		    9 sek   (St.d. 4 sek!!)
+F2l		   30 sek
+OLL 	 	    7 sek
+PLL   		 5-10 sek   (SUB 5: A, U, J, Y, T, H. SUB 7: R, Z,  -- SUB 10: V, N, E, F, G) 
