@@ -1,5 +1,5 @@
 from APIs.Poloniexlib import Poloniex
-
+import pickle
 
 class APIConn(object):
 	def __init__(self, exchange, live=False, read_only=True):
@@ -10,12 +10,14 @@ class APIConn(object):
 		self.num_trades = 0
 		
 		if exchange == "poloniex":
+			with open(r"poloniex.pickle", "rb") as key_file:
+				keys = pickle.load(key_file)
 			if self.read_only:
-				_public = u''  # Reader Public here #
-				_secret = u''  # Reader Secret here #
+				_public = keys["reader_public"]
+				_secret = keys["reader_secret"]
 			else:
-				_public = u''  # Reader Public here #
-				_secret = u''  # Reader Secret here #
+				_public = keys["trader_public"]
+				_secret = keys["trader_secret"]
 			self.conn = Poloniex(_public, _secret)
 
 	def get_last_price(self, pair):
