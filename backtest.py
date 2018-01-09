@@ -20,5 +20,4 @@ for price in prices:
 		with trades[trade_key] as trade:
 				conn.execute_trade(trade)
 
-Summary(conn.trades).print()
-print("Hello GitWorld - test")
+#  Summary(conn.trades).print()
