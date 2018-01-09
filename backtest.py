@@ -21,3 +21,5 @@ for price in prices:
 				conn.execute_trade(trade)
 
 #  Summary(conn.trades).print()
+print("Hello Git 2")
+
