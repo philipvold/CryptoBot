@@ -14,26 +14,33 @@ class Strategy(object):
 		self.tx_fee = 0.9975  # poloniex specific transaction fee
 		
 		#  Strategy parameters
-		self.sleep = 1
+		self.sleep = 5
 		self.trade_size = 0.001  # Trade size ETH ~~ 1 USD as of jan '18
 		self.spread_mult = 0.02  # Pct in decimal
 		self.n_open_trades = 0
 		self.freq = 300
 		self.pairs = ["BTC_ETH", "ETH_ETC", "BTC_ETC"]
+		self.directions = ["buy", "buy", "sell"]
+		self.bid_ask = self.get_bid_ask_from_direction()
+		self.price_target = 1.01
 
 		self.initialize()
 		
-	def tick(self, new_prices):
+	def tick(self, new_prices=None):
 		self.new_trades = {}
 		prices = []
 		
-		for pairs in self.pairs:
-			prices.append(new_prices.loc[pairs])
-			
+		if new_prices:
+			for pairs in self.pairs:
+				prices.append(new_prices.loc[pairs])
+		else:
+			for i in range(len(self.pairs)):
+				prices.append(float(self.conn.get_price_data(self.pairs[i])[self.bid_ask[i]]))
+				
 		# *** STRATEGY GOES HERE *** #
 		triangle_price = prices[0]*prices[1]*(1/prices[2])
 		
-		if triangle_price >= 1.021:
+		if triangle_price >= self.price_target:
 			amt_0 = self.trade_size
 			price_0 = prices[0] * (1 + self.spread_mult)
 			
@@ -43,11 +50,13 @@ class Strategy(object):
 			amt_2 = amt_1 / price_1 * self.tx_fee
 			price_2 = prices[2] * (1 - self.spread_mult)
 			
-			self.add_trade("buy", self.pairs[0], price_0, amt_0)  # Buy 0.001 ETH ~~ 1 USD (from BTC)
-			self.add_trade("buy", self.pairs[1], price_1, amt_1)  # Buy ~~ 1 USD worth of ETC (from BTC)
-			self.add_trade("sell", self.pairs[2], price_2, amt_2)  # sell ~~ 1 USD worth of ETC (to BTC)
-
+			self.add_trade(self.directions[0], self.pairs[0], price_0, amt_0)  # Buy 0.001 ETH ~~ 1 USD (from BTC)
+			self.add_trade(self.directions[1], self.pairs[1], price_1, amt_1)  # Buy ~~ 1 USD worth of ETC (from BTC)
+			self.add_trade(self.directions[2], self.pairs[2], price_2, amt_2)  # sell ~~ 1 USD worth of ETC (to BTC)
+		
+		print(time.ctime(), round(triangle_price, 6))
 		if self.new_trades:
+			
 			for key in self.new_trades.keys():
 				print(self.new_trades[key])
 		
@@ -77,3 +86,15 @@ class Strategy(object):
 			result[key] = data[key]
 		
 		return result
+	
+	def get_bid_ask_from_direction(self):
+		hilo = []
+		for i in range(len(self.pairs)):
+			if self.directions[i] == "buy":
+				hilo.append("lowestAsk")
+			elif self.directions[i] == "sell":
+				hilo.append("highestBid")
+			else:
+				raise ValueError("WARNING: TYPO IN TRADE DIRECTIONS")
+			
+		return hilo

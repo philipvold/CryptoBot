@@ -25,8 +25,8 @@ class APIConn(object):
 
 	def get_price_data(self, pair):
 		current_values = self.conn.api_query("returnTicker")
-		last_prices = current_values[pair]  # ["last"]  # This is specific for Poloniex -- Needs fix
-		return last_prices
+		price_data = current_values[pair]  # ["last"]  # This is specific for Poloniex -- Needs fix
+		return price_data
 	
 	def execute_trade(self, trade):  # BUY amount of BASE/last at rate
 		if self.read_only:
@@ -39,6 +39,7 @@ class APIConn(object):
 			amount = trade[3]
 			
 			# poloniex specific!
+			print(direction, pair, rate, amount, type(direction), type(pair), type(rate), type(amount))
 			return self.conn.api_query(direction, {"currencyPair": pair, "rate": rate, "amount": amount})
 	
 	def get_data(self, pair, start, end, frequency):
