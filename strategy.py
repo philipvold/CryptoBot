@@ -11,20 +11,45 @@ class Strategy(object):
 		self.new_trades = {}
 		self.num_trades = 0
 		self.conn = APIConn("poloniex", live=False, read_only=True)  # Strategy independent
+		self.tx_fee = 0.9975  # poloniex specific transaction fee
 		
 		#  Strategy parameters
-		self.max_trades = 1
 		self.sleep = 1
+		self.trade_size = 0.001  # Trade size ETH ~~ 1 USD as of jan '18
+		self.spread_mult = 0.02  # Pct in decimal
 		self.n_open_trades = 0
 		self.freq = 300
-		self.pairs = ["USDT_BTC", "BTC_ETH", "ETH_ETC", "BTC_ETC"]
+		self.pairs = ["BTC_ETH", "ETH_ETC", "BTC_ETC"]
 
 		self.initialize()
 		
 	def tick(self, new_prices):
 		self.new_trades = {}
+		prices = []
 		
+		for pairs in self.pairs:
+			prices.append(new_prices.loc[pairs])
+			
 		# *** STRATEGY GOES HERE *** #
+		triangle_price = prices[0]*prices[1]*(1/prices[2])
+		
+		if triangle_price >= 1.021:
+			amt_0 = self.trade_size
+			price_0 = prices[0] * (1 + self.spread_mult)
+			
+			amt_1 = amt_0 / price_0 * self.tx_fee
+			price_1 = prices[1] * (1 + self.spread_mult)
+			
+			amt_2 = amt_1 / price_1 * self.tx_fee
+			price_2 = prices[2] * (1 - self.spread_mult)
+			
+			self.add_trade("buy", self.pairs[0], price_0, amt_0)  # Buy 0.001 ETH ~~ 1 USD (from BTC)
+			self.add_trade("buy", self.pairs[1], price_1, amt_1)  # Buy ~~ 1 USD worth of ETC (from BTC)
+			self.add_trade("sell", self.pairs[2], price_2, amt_2)  # sell ~~ 1 USD worth of ETC (to BTC)
+
+		if self.new_trades:
+			for key in self.new_trades.keys():
+				print(self.new_trades[key])
 		
 		return self.new_trades
 	

@@ -33,10 +33,10 @@ class APIConn(object):
 			raise ValueError("WARNING: THIS CONNECTION IS NOT SUPPOSED TO EXECUTE TRADES!")
 		
 		if self.live:
-			direction = trade(0)
-			pair = trade(1)
-			rate = trade(2)
-			amount = trade(3)
+			direction = trade[0]
+			pair = trade[1]
+			rate = trade[2]
+			amount = trade[3]
 			
 			# poloniex specific!
 			return self.conn.api_query(direction, {"currencyPair": pair, "rate": rate, "amount": amount})
@@ -46,7 +46,7 @@ class APIConn(object):
 		if self.exchange == "poloniex":
 			data = self.conn.api_query("returnChartData", {"currencyPair": pair, "start": start, "end": end, "period": frequency})['candleStick']
 			df = pd.DataFrame(data)
-			df.index = df["Unix Date"]
+			df.index = df["date"]
 			df = df.drop(["close", "date", "high", "low", "open", "quoteVolume", "volume"], axis=1)
 			df.columns = ["Price"]
 			df = df.sort_index()
