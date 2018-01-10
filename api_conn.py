@@ -46,7 +46,7 @@ class APIConn(object):
 		if self.exchange == "poloniex":
 			data = self.conn.api_query("returnChartData", {"currencyPair": pair, "start": start, "end": end, "period": frequency})['candleStick']
 			df = pd.DataFrame(data)
-			df.index = df['date']
+			df.index = df["Unix Date"]
 			df = df.drop(["close", "date", "high", "low", "open", "quoteVolume", "volume"], axis=1)
 			df.columns = ["Price"]
 			df = df.sort_index()

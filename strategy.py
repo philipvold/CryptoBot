@@ -17,7 +17,7 @@ class Strategy(object):
 		self.sleep = 1
 		self.n_open_trades = 0
 		self.freq = 300
-		self.pairs = ["ETH_BTC", "ETC_ETH", "ETC_BTC"]
+		self.pairs = ["USDT_BTC", "BTC_ETH", "ETH_ETC", "BTC_ETC"]
 
 		self.initialize()
 		
@@ -30,7 +30,7 @@ class Strategy(object):
 	
 	@staticmethod
 	def initialize(start=0):
-		init_time = 3600  # 1 hour
+		init_time = 3600  # 1 hour -- STRATEGY SPECIFIC!!
 		if not start:
 			start = int(time.time())
 	
@@ -42,6 +42,13 @@ class Strategy(object):
 	def get_data(self, start, end):
 		data = {}
 		for pair in self.pairs:
+			print("Importing %s data" % pair)
 			data[pair] = self.conn.get_data(pair, start, end, self.freq)
-		return data
-	
+			
+		idx = data[self.pairs[0]].index
+		result = pd.DataFrame(index=idx)
+		
+		for key in data.keys():
+			result[key] = data[key]
+		
+		return result

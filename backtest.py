@@ -9,11 +9,11 @@ strat = Strategy()
 test_start = 1512086400  # Unix date -- December 1st '17
 test_end = 1512691200  # Unix date -- December 8th '17
 
-prices = strat.get_data(test_start, test_end)
+data = strat.get_data(test_start, test_end)
 
 strat.initialize(start=test_start)
 
-for price in prices:
+for price in data:
 	trades = strat.tick(price)
 	
 	for trade_key in trades.keys():
@@ -21,5 +21,5 @@ for price in prices:
 				conn.execute_trade(trade)
 
 #  Summary(conn.trades).print()
-print("Hello Git 2")
+
 
