@@ -39,8 +39,11 @@ class APIConn(object):
 			amount = trade[3]
 			
 			# poloniex specific!
-			print(direction, pair, rate, amount, type(direction), type(pair), type(rate), type(amount))
-			return self.conn.api_query(direction, {"currencyPair": pair, "rate": rate, "amount": amount})
+			print(direction, pair, rate, amount)
+			json = self.conn.api_query(direction, {"currencyPair": pair, "rate": rate, "amount": amount})
+			print(json)
+			
+			return json
 	
 	def get_data(self, pair, start, end, frequency):
 		""" Returns a list of prices """
