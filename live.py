@@ -10,10 +10,10 @@ runtime = 750  # iterations
 
 while runtime:
 	trades = strat.tick()
+	
 	for trade_key in trades.keys():
 		conn.execute_trade(trades[trade_key])
-		time.sleep(0.02)
-	
+		
 	
 	time.sleep(strat.sleep)
 	runtime -= 1

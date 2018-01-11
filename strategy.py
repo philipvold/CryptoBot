@@ -14,13 +14,13 @@ class Strategy(object):
 		self.tx_fee = 0.9975  # poloniex specific transaction fee
 		
 		#  Strategy parameters
-		self.sleep = 5
-		self.trade_size = 0.01  # Trade size ETH ~~ 10 USD as of jan '18
+		self.sleep = 2
+		self.trade_size = 0.001  # Trade size ETH ~~ 10 USD as of jan '18
 		self.spread_mult = 0.2  # Pct in decimal
 		self.n_open_trades = 0
 		self.freq = 300
-		self.pairs = ["BTC_ETH", "ETH_ETC", "BTC_ETC"]
-		self.directions = ["buy", "buy", "sell"]
+		self.pairs = ["USDT_BTC", "USDT_BCH", "BTC_BCH"]
+		self.directions = self.get_directions(self.pairs)
 		self.bid_ask = self.get_bid_ask_from_direction()
 		self.price_target = 1.01
 
@@ -38,23 +38,20 @@ class Strategy(object):
 				prices.append(float(self.conn.get_price_data(self.pairs[i])[self.bid_ask[i]]))
 				
 		# *** STRATEGY GOES HERE *** #
-		triangle_price = 1/prices[0]/prices[1]*prices[2]
+		triangle = self.arbitrage_indicator(prices)
+		if triangle >= self.price_target:
+			multipliers = self.get_trade_mult()
+			trade_prices = []
+			
+			for i in range(len(self.pairs)):
+				trade_prices.append(prices[i]*multipliers[i])
+			
+			trade_amounts = self.get_trade_amnt(prices)
+			
+			for i in range(len(self.directions)):
+				self.add_trade(self.directions[i], self.pairs[i], trade_prices[i], trade_amounts[i])
 		
-		if triangle_price >= self.price_target:
-			price_0 = prices[0] * (1 + self.spread_mult)
-			amt_0 = self.trade_size
-			
-			price_1 = prices[1] * (1 + self.spread_mult)
-			amt_1 = amt_0 / prices[1] * self.tx_fee
-			
-			price_2 = prices[2] * (1 - self.spread_mult)
-			amt_2 = amt_1 * self.tx_fee
-			
-			self.add_trade(self.directions[0], self.pairs[0], price_0, amt_0)  # Buy 0.001 ETH ~~ 1 USD (from BTC)
-			self.add_trade(self.directions[1], self.pairs[1], price_1, amt_1)  # Buy ~~ 1 USD worth of ETC (from BTC)
-			self.add_trade(self.directions[2], self.pairs[2], price_2, amt_2)  # sell ~~ 1 USD worth of ETC (to BTC)
-		
-		print(time.ctime(), round(triangle_price, 6))
+		print(time.ctime(), round(triangle, 5))
 		return self.new_trades
 	
 	@staticmethod
@@ -93,3 +90,71 @@ class Strategy(object):
 				raise ValueError("WARNING: TYPO IN TRADE DIRECTIONS")
 			
 		return hilo
+	
+	@staticmethod
+	def get_base_currency(pairs):
+		if "BTC" in pairs[0]:
+			base_curr = "BTC"
+		elif "USDT" in pairs[0]:
+			base_curr = "USDT"
+		elif "ETH" in pairs[0]:
+			base_curr = "ETH"
+		else:
+			raise ValueError("WARNING: CANNOT IDENTIFY BASE CURRENCY")
+		return base_curr
+	
+	def get_directions(self, pairs):
+		base = self.get_base_currency(pairs)
+		directions = []
+		
+		for pair in pairs:
+			pair_lst = pair.split("_")
+			if pair_lst[0] == base:
+				directions.append("buy")
+				base = pair_lst[1]
+			else:
+				directions.append("sell")
+				base = pair_lst[0]
+				
+		return directions
+	
+	def get_trade_mult(self):
+		pp = []
+		
+		for d in self.directions:
+			if d == "buy":
+				pp.append(1 + self.spread_mult)
+			else:
+				pp.append(1 - self.spread_mult)
+		return pp
+	
+	def get_trade_amnt(self, new_prices):
+		base = self.get_base_currency(self.pairs)
+		amounts = []
+		
+		if base == "BTC":
+			trade_size = 0.0005  # BTC
+		elif base == "USDT":
+			trade_size = 10  # USDT
+		else:
+			trade_size = 0.01  # ETH
+			
+		for i in range(len(self.directions)):
+			if self.directions[i] == "buy":
+				trade_size = trade_size/new_prices[i]*self.tx_fee
+				amounts.append(trade_size)
+			else:
+				trade_size *= self.tx_fee
+				amounts.append(trade_size)
+		
+		return amounts
+	
+	def arbitrage_indicator(self, prices):
+		arbi = 1.0
+		for i in range(len(self.directions)):
+			if self.directions[i] == "buy":
+				arbi /= prices[i]
+			else:
+				arbi *= prices[i]
+		return arbi
+		
