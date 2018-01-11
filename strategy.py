@@ -14,9 +14,9 @@ class Strategy(object):
 		self.tx_fee = 0.9975  # poloniex specific transaction fee
 		
 		#  Strategy parameters
-		self.sleep = 2
+		self.sleep = 5
 		self.trade_size = 0.01  # Trade size ETH ~~ 10 USD as of jan '18
-		self.spread_mult = 0.00  # Pct in decimal
+		self.spread_mult = 0.2  # Pct in decimal
 		self.n_open_trades = 0
 		self.freq = 300
 		self.pairs = ["BTC_ETH", "ETH_ETC", "BTC_ETC"]
@@ -41,13 +41,13 @@ class Strategy(object):
 		triangle_price = prices[0]*prices[1]*(1/prices[2])
 		
 		if triangle_price >= self.price_target:
-			price_0 = prices[0]
+			price_0 = prices[0] * (1 + self.spread_mult)
 			amt_0 = self.trade_size
 			
-			price_1 = prices[1]
-			amt_1 = amt_0 / price_1 * self.tx_fee
+			price_1 = prices[1] * (1 + self.spread_mult)
+			amt_1 = amt_0 / prices[1] * self.tx_fee
 			
-			price_2 = prices[2]
+			price_2 = prices[2] * (1 - self.spread_mult)
 			amt_2 = amt_1 * self.tx_fee
 			
 			self.add_trade(self.directions[0], self.pairs[0], price_0, amt_0)  # Buy 0.001 ETH ~~ 1 USD (from BTC)
