@@ -38,7 +38,7 @@ class Strategy(object):
 				prices.append(float(self.conn.get_price_data(self.pairs[i])[self.bid_ask[i]]))
 				
 		# *** STRATEGY GOES HERE *** #
-		triangle_price = prices[0]*prices[1]*(1/prices[2])
+		triangle_price = 1/prices[0]/prices[1]*prices[2]
 		
 		if triangle_price >= self.price_target:
 			price_0 = prices[0] * (1 + self.spread_mult)
